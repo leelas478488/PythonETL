@@ -9,6 +9,8 @@ df.rename(columns={
     "department":"dept",
     "salary":"pay"
 }, inplace=True)
+print(df)
+df = df[df["pay"] > 70000]
 
 df.to_csv("target_employees.csv",index=False)
 print(df)
