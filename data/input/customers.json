@@ -1,0 +1,14 @@
+[
+  {
+    "customer_id": 1,
+    "name": "Amit",
+    "contact": {"email": "amit@example.com", "phone": "1234567890"},
+    "address": {"city": "Hyderabad", "pincode": "500001"}
+  },
+  {
+    "customer_id": 2,
+    "name": "Neha",
+    "contact": {"email": "neha@example.com", "phone": "0987654321"},
+    "address": {"city": "Delhi", "pincode": "110001"}
+  }
+]
