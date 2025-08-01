@@ -5,7 +5,7 @@ import json
 import requests
 from bs4 import BeautifulSoup
 import nltk
-nltk.download('punkt_tab')  # ✅ This is the correct one
+nltk.download('punkt_tab')  # This is the correct one
 
 import nltk
 try:
