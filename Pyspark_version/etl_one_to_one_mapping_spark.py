@@ -1,36 +1,38 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, current_timestamp
 import os
-spark._jsc.hadoopConfiguration().set("hadoop.check.native.io", "false")
+import platform
 
-# Initialize SparkSession
-spark = SparkSession.builder \
-    .appName("OneToOneETL") \
-    .getOrCreate()
-spark.sparkContext._jvm.org.apache.hadoop.fs.FileSystem.get(
-    spark._jsc.hadoopConfiguration()
-).set(
-    "spark.hadoop.io.native.lib.available", "false"
-)
+# 1. Initialize SparkSession with fix for Windows native I/O issue
+builder = SparkSession.builder.appName("OneToOneETL")
 
-# Define file paths
-input_path = "C:/Users/91888/PycharmProjects/PythonETL/data/input/employees.csv"
-output_path = "C:/Users/91888/PycharmProjects/PythonETL/data/output/employees_transformed.csv"
+# Apply Windows-specific configs
+if platform.system().lower() == "windows":
+    builder = builder \
+        .config("spark.hadoop.hadoop.native.lib", "false") \
+        .config("spark.hadoop.fs.file.impl.disable.cache", "true")
 
-# Check input file exists
+spark = builder.getOrCreate()
+
+# 2. Define file paths
+input_path = r"C:/Users/91888/PycharmProjects/PythonETL/data/input/employees.csv"
+# IMPORTANT: For Spark CSV output, give a folder path, not a single file
+output_path = r"C:/Users/91888/PycharmProjects/PythonETL/data/output/employees_transformed"
+
+# 3. Check input file exists
 if not os.path.exists(input_path):
     raise FileNotFoundError(f"Input file not found: {input_path}")
 
-# Create output directory if it doesn't exist
+# 4. Create output directory if it doesn't exist (Spark will overwrite it anyway)
 os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-# 1. Extract
+# 5. Extract
 df = spark.read.option("header", "true").option("inferSchema", "true").csv(input_path)
 
-# 2. Transform
+# 6. Transform — filter high salaries
 df_filtered = df.filter(col("salary") > 70000)
 
-# Rename columns using withColumnRenamed
+# 7. Rename columns and add processed date
 df_renamed = df_filtered \
     .withColumnRenamed("emp_id", "employee_id") \
     .withColumnRenamed("emp_name", "employee_name") \
@@ -38,14 +40,13 @@ df_renamed = df_filtered \
     .withColumnRenamed("salary", "monthly_salary") \
     .withColumn("processed_date", current_timestamp())
 
-# 3. Load (append if file exists, else create)
-if os.path.exists(output_path):
-    df_renamed.write.mode("append").option("header", "false").csv(output_path)
-    print(df_renamed)
-    print(f"Appended to existing file: {output_path}")
-else:
-    df_renamed.write.mode("overwrite").option("header", "true").csv(output_path)
-    print(df_renamed)
-    print(f"Created new output file: {output_path}")
+df_renamed.show()
+# 8. Load — Spark will create multiple part-*.csv files inside the folder
+#df_renamed.write.mode("overwrite").option("header", "true").csv(output_path)
 
+# 9. Done
+print("ETL completed. Transformed data written to folder:")
+print(output_path)
+
+# 10. Stop Spark session
 spark.stop()
