@@ -1,0 +1,12 @@
+beautifulsoup4
+requests
+openai
+python-dotenv
+langdetect
+openai
+transformers
+torch
+requests
+beautifulsoup4
+python-dotenv
+tk
